@@ -96,10 +96,10 @@ def create_scene():
 
 # Função de visualização da cena no sistema da câmera
 def plot_camera_scene(scene, camera_rotation, camera_translation):
-    fig = plt.figure(figsize=(12, 10))
+    fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
 
-    colors = ['#4e79a7', '#59a14f', '#e15759', '#f28e2b']
+    colors = ['blue', 'green', 'red', 'purple']
     labels = ['Caixa Aberta', 'Cone', 'Tronco de Cone', 'Linha']
 
     for idx, (verts, faces) in enumerate(scene):
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     scene = create_scene()
 
     # Definir parâmetros da câmera
-    camera_eye = np.array([10, 10, 10])  # Posição da câmera
+    camera_eye = np.array([1, 1, 10])  # Posição da câmera
     camera_target = np.array([0, 0, 0])  # Ponto de foco
     camera_up = np.array([0, 0, 1])      # Vetor "para cima"
 

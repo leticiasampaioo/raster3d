@@ -97,13 +97,22 @@ def create_line(length=3, radius=0.05, resolution=50):
 
     return vertices, faces
 
-def plot_mesh(vertices, faces, title='Malha 3D'):
+# def create_line(length=3):
+#     """
+#     Linha reta de tamanho 3
+#     """
+#     # Define os pontos inicial e final da linha
+#     vertices = np.array([[0, 0, 0], [0, 0, length]])  # Linha ao longo do eixo Z
+#     faces = np.array([[0, 1]])  # Apenas uma aresta conectando os dois pontos
+#     return vertices, faces
+
+def plot_mesh(vertices, faces, title='Malha 3D', facecolor='skyblue', linewidth=2):
     """Função de visualização genérica"""
-    fig = plt.figure(figsize=(10, 8))
+    fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
 
     mesh = Poly3DCollection(vertices[faces], alpha=0.8)
-    mesh.set_facecolor('skyblue')
+    mesh.set_facecolor(facecolor)
     mesh.set_edgecolor('k')
     ax.add_collection3d(mesh)
 
@@ -124,16 +133,16 @@ def plot_mesh(vertices, faces, title='Malha 3D'):
 if __name__ == "__main__":
     # Caixa aberta
     vertices, faces = create_open_box(side=2, height=1.5, wall_thickness=0.15)
-    plot_mesh(vertices, faces, 'Caixa Aberta')
+    plot_mesh(vertices, faces, 'Caixa Aberta', facecolor='blue')
 
     # Cone
     vertices, faces = create_cone(radius=1, height=3)
-    plot_mesh(vertices, faces, 'Cone')
+    plot_mesh(vertices, faces, 'Cone', facecolor='green')
 
     # Tronco de cone
     vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=2)
-    plot_mesh(vertices, faces, 'Tronco de Cone')
+    plot_mesh(vertices, faces, 'Tronco de Cone', facecolor='red')
 
     # Linha
     vertices, faces = create_line(length=3, radius=0.08)
-    plot_mesh(vertices, faces, 'Linha Reta')
+    plot_mesh(vertices, faces, 'Linha Reta',facecolor='purple')

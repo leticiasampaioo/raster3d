@@ -64,28 +64,28 @@ def create_scene():
             'faces': box_faces,
             'scale': 2,
             'rot': (0, 30, 0),
-            'trans': (-8, 0, 0)
+            'trans': (-7, 7, 0)
         },
         {
             'verts': cone_verts,
             'faces': cone_faces,
-            'scale': 1.5,
+            'scale': 1,
             'rot': (45, 0, 0),
-            'trans': (6, 6, 0)
+            'trans': (5, 5, -4)
         },
         {
             'verts': frustum_verts,
             'faces': frustum_faces,
-            'scale': 1.2,
+            'scale': 1.5,
             'rot': (0, 0, -30),
-            'trans': (-5, -7, 5)
+            'trans': (-8, -8, 4)
         },
         {
             'verts': line_verts,
             'faces': line_faces,
-            'scale': 3,
-            'rot': (0, 90, 0),
-            'trans': (5, -5, 5)
+            'scale': 2,
+            'rot': (0, 60, 0),
+            'trans': (5, -5, -8)
         }
     ]
 
@@ -107,7 +107,7 @@ def plot_scene(scene):
     fig = plt.figure(figsize=(12, 10))
     ax = fig.add_subplot(111, projection='3d')
 
-    colors = ['#4e79a7', '#59a14f', '#e15759', '#f28e2b']
+    colors = ['blue', 'green', 'red', 'purple']
     labels = ['Caixa Aberta', 'Cone', 'Tronco de Cone', 'Linha']
 
     for idx, (verts, faces) in enumerate(scene):
