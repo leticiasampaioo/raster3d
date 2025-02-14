@@ -3,21 +3,28 @@ from skimage.measure import marching_cubes
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-def create_open_box(side=2, height=1, wall_thickness=0.1, resolution=20):
-
+def create_open_box(side=2, height=1, wall_thickness=0.1, resolution=50):
+    """
+    Caixa aberta sem tampa com base quadrada
+    :param side: Lado da base quadrada
+    :param height: Altura da caixa
+    :param wall_thickness: Espessura das paredes
+    :param resolution: Resolução da grade 3D
+    """
+    # Cria grade 3D centralizada na base
     x = np.linspace(-side/2, side/2, resolution)
     y = np.linspace(-side/2, side/2, resolution)
     z = np.linspace(0, height, resolution)
 
     X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
 
-    left_wall = X <= (-side/2 + wall_thickness)
-    right_wall = X >= (side/2 - wall_thickness)
-    front_wall = Y <= (-side/2 + wall_thickness)
-    back_wall = Y >= (side/2 - wall_thickness)
-    bottom = Z <= wall_thickness
+    # Define as paredes e fundo
+    outer = (np.abs(X) <= side/2) & (np.abs(Y) <= side/2) & (Z <= height)
+    inner = (np.abs(X) <= side/2 - wall_thickness) & \
+            (np.abs(Y) <= side/2 - wall_thickness) & \
+            (Z >= wall_thickness)
 
-    volume = left_wall | right_wall | front_wall | back_wall | bottom
+    volume = outer & ~inner
 
     vertices, faces, _, _ = marching_cubes(
         volume,
@@ -27,8 +34,10 @@ def create_open_box(side=2, height=1, wall_thickness=0.1, resolution=20):
 
     return vertices, faces
 
-def create_cone(radius=1, height=2, resolution=20):
-
+def create_cone(radius=1, height=2, resolution=50):
+    """
+    Cone completo
+    """
     x = np.linspace(-radius, radius, resolution)
     y = np.linspace(-radius, radius, resolution)
     z = np.linspace(0, height, resolution)
@@ -46,8 +55,10 @@ def create_cone(radius=1, height=2, resolution=20):
 
     return vertices, faces
 
-def create_frustum(r_lower=1, r_upper=0.5, height=2, resolution=20):
-
+def create_frustum(r_lower=1, r_upper=0.5, height=2, resolution=50):
+    """
+    Tronco de cone (frustum)
+    """
     max_radius = max(r_lower, r_upper)
     x = np.linspace(-max_radius, max_radius, resolution)
     y = np.linspace(-max_radius, max_radius, resolution)
@@ -66,8 +77,10 @@ def create_frustum(r_lower=1, r_upper=0.5, height=2, resolution=20):
 
     return vertices, faces
 
-def create_line(length=3, radius=0.05, resolution=20):
-
+def create_line(length=3, radius=0.05, resolution=50):
+    """
+    Linha reta representada como cilindro fino
+    """
     x = np.linspace(-radius, radius, resolution)
     y = np.linspace(-radius, radius, resolution)
     z = np.linspace(0, length, resolution)
@@ -85,6 +98,7 @@ def create_line(length=3, radius=0.05, resolution=20):
     return vertices, faces
 
 def plot_mesh(vertices, faces, title='Malha 3D'):
+    """Função de visualização genérica"""
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
 
@@ -98,15 +112,18 @@ def plot_mesh(vertices, faces, title='Malha 3D'):
     ax.set_zlabel('Z')
     ax.set_title(title)
 
-    ax.set_xlim(-2, 2)
-    ax.set_ylim(-2, 2)
-    ax.set_zlim(-2, 2)
+    # Ajuste automático dos limites
+    max_dim = max(vertices.max(axis=0) - vertices.min(axis=0))
+    ax.set_xlim(vertices[:,0].min(), vertices[:,0].max())
+    ax.set_ylim(vertices[:,1].min(), vertices[:,1].max())
+    ax.set_zlim(vertices[:,2].min(), vertices[:,2].max())
 
     plt.show()
 
+# Exemplo de uso para todos os objetos
 if __name__ == "__main__":
     # Caixa aberta
-    vertices, faces = create_open_box(side=3, height=2, wall_thickness=0.6, resolution=30)
+    vertices, faces = create_open_box(side=2, height=1.5, wall_thickness=0.15)
     plot_mesh(vertices, faces, 'Caixa Aberta')
 
     # Cone
