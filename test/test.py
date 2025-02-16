@@ -2,6 +2,8 @@ import numpy as np
 from skimage.measure import marching_cubes
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from scipy.spatial import ConvexHull
+
 
 def create_open_box(side=2, height=1, wall_thickness=0.1, resolution=50):
     """
@@ -34,47 +36,79 @@ def create_open_box(side=2, height=1, wall_thickness=0.1, resolution=50):
 
     return vertices, faces
 
-def create_cone(radius=1, height=2, resolution=50):
+def create_cone(radius=1, height=2, resolution=50, pad=0.1):
     """
-    Cone completo
+    Cria um cone sólido fechado (com base e lateral) utilizando o marching cubes.
+    É adicionado um padding no eixo Z para que as transições (de False para True)
+    ocorram internamente ao grid, permitindo que o algoritmo gere as faces (base e ápice)
+    com a triangulação padrão.
+
+    Parâmetros:
+      - radius: raio da base do cone.
+      - height: altura do cone.
+      - resolution: resolução da grade 3D.
+      - pad: valor de padding no eixo Z.
+
+    Retorna:
+      - vertices, faces: malha triangular do cone fechado.
     """
+    # Define os intervalos de x, y e z
     x = np.linspace(-radius, radius, resolution)
     y = np.linspace(-radius, radius, resolution)
-    z = np.linspace(0, height, resolution)
+    # O eixo z é estendido de -pad a height+pad para garantir que as superfícies
+    # (base e ápice) não estejam exatamente na borda do grid.
+    z = np.linspace(-pad, height + pad, resolution)
 
     X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
 
-    cone_radius = radius * (1 - Z/height)
-    volume = (np.sqrt(X**2 + Y**2) <= cone_radius) & (Z >= 0)
+    # Define o volume do cone:
+    # - Apenas para 0 <= z <= height
+    # - Para cada z, o raio máximo é dado por: radius * (1 - z/height)
+    volume = ((Z >= 0) & (Z <= height)) & (np.sqrt(X ** 2 + Y ** 2) <= radius * (1 - Z / height))
 
-    vertices, faces, _, _ = marching_cubes(
-        volume,
-        level=0.5,
-        spacing=(x[1]-x[0], y[1]-y[0], z[1]-z[0])
-    )
+    # Converte o volume para float para garantir transição suave (0 para 1)
+    volume = volume.astype(float)
 
+    # Executa o marching cubes para extrair a malha
+    vertices, faces, _, _ = marching_cubes(volume, level=0.5,
+                                           spacing=(x[1] - x[0], y[1] - y[0], z[1] - z[0]))
     return vertices, faces
 
-def create_frustum(r_lower=1, r_upper=0.5, height=2, resolution=50):
+def create_frustum(r_lower=1, r_upper=0.5, height=2, resolution=50, pad=0.1):
     """
-    Tronco de cone (frustum)
+    Cria o tronco de cone como sólido fechado (com bases e topo) usando o padrão do marching cubes.
+
+    Para que o marching cubes gere todas as faces (inclusive base e topo) de forma padrão,
+    o volume é definido com um pequeno padding no eixo z.
+
+    Parâmetros:
+      - r_lower: raio da base inferior.
+      - r_upper: raio da base superior.
+      - height: altura do tronco.
+      - resolution: resolução da grade.
+      - pad: valor de padding no eixo z.
+
+    Retorna:
+      - vertices, faces: malha triangular gerada.
     """
+    # Para x e y usamos o máximo dos raios
     max_radius = max(r_lower, r_upper)
     x = np.linspace(-max_radius, max_radius, resolution)
     y = np.linspace(-max_radius, max_radius, resolution)
-    z = np.linspace(0, height, resolution)
+    # O eixo z é estendido um pouco além do intervalo [0, height]
+    z = np.linspace(-pad, height + pad, resolution)
 
     X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
 
-    current_radius = r_lower + (r_upper - r_lower) * (Z / height)
-    volume = (np.sqrt(X**2 + Y**2) <= current_radius) & (Z >= 0)
+    # Definindo o volume:
+    # A região interior é onde Z está entre 0 e height e o raio no plano XY é menor ou igual
+    # a uma interpolação linear entre r_lower e r_upper.
+    # Fora desse intervalo de z o volume é False, fazendo com que as transições ocorram no interior do grid.
+    volume = ((Z >= 0) & (Z <= height)) & (np.sqrt(X ** 2 + Y ** 2) <= (r_lower + (r_upper - r_lower) * (Z / height)))
 
-    vertices, faces, _, _ = marching_cubes(
-        volume,
-        level=0.5,
-        spacing=(x[1]-x[0], y[1]-y[0], z[1]-z[0])
-    )
-
+    # Executa o marching cubes. Convertendo o volume para float garante que a transição de 0 para 1 seja bem interpretada.
+    vertices, faces, _, _ = marching_cubes(volume.astype(float), level=0.5,
+                                           spacing=(x[1] - x[0], y[1] - y[0], z[1] - z[0]))
     return vertices, faces
 
 # def create_line(length=3, radius=0.05, resolution=50):
@@ -127,6 +161,8 @@ def plot_mesh(vertices, faces, title='Malha 3D', facecolor='skyblue', linewidth=
     ax.set_ylim(vertices[:,1].min(), vertices[:,1].max())
     ax.set_zlim(vertices[:,2].min(), vertices[:,2].max())
 
+    ax.auto_scale_xyz(vertices[:, 0], vertices[:, 1], vertices[:, 2])
+
     plt.show()
 
 # Exemplo de uso para todos os objetos
@@ -136,11 +172,14 @@ if __name__ == "__main__":
     plot_mesh(vertices, faces, 'Caixa Aberta', facecolor='blue')
 
     # Cone
-    vertices, faces = create_cone(radius=1, height=3)
+    # vertices, faces = create_cone(radius=1, height=3)
+    vertices, faces = create_cone(radius=1, height=3, resolution=70, pad=0.1)
     plot_mesh(vertices, faces, 'Cone', facecolor='green')
 
     # Tronco de cone
-    vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=2)
+    # vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=2)
+    vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=3,
+                                            resolution=70, pad=0.1)
     plot_mesh(vertices, faces, 'Tronco de Cone', facecolor='red')
 
     # Linha
