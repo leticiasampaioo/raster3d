@@ -2,8 +2,6 @@ import numpy as np
 from skimage.measure import marching_cubes
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from scipy.spatial import ConvexHull
-
 
 def create_open_box(side=2, height=1, wall_thickness=0.1, resolution=50):
     """
@@ -111,26 +109,6 @@ def create_frustum(r_lower=1, r_upper=0.5, height=2, resolution=50, pad=0.1):
                                            spacing=(x[1] - x[0], y[1] - y[0], z[1] - z[0]))
     return vertices, faces
 
-# def create_line(length=3, radius=0.05, resolution=50):
-#     """
-#     Linha reta representada como cilindro fino
-#     """
-#     x = np.linspace(-radius, radius, resolution)
-#     y = np.linspace(-radius, radius, resolution)
-#     z = np.linspace(0, length, resolution)
-#
-#     X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
-#
-#     volume = (np.sqrt(X**2 + Y**2) <= radius) & (Z >= 0)
-#
-#     vertices, faces, _, _ = marching_cubes(
-#         volume,
-#         level=0.5,
-#         spacing=(x[1]-x[0], y[1]-y[0], z[1]-z[0])
-#     )
-#
-#     return vertices, faces
-
 def create_line(length=3):
     """
     Linha reta de tamanho 3
@@ -165,29 +143,74 @@ def plot_mesh(vertices, faces, title='Malha 3D', facecolor='skyblue', linewidth=
 
     plt.show()
 
-# Exemplo de uso para todos os objetos
+def menu():
+    while True:
+        print("\nEscolha o sólido para visualizar:")
+        print("1 - Caixa Aberta")
+        print("2 - Cone")
+        print("3 - Tronco de Cone")
+        print("4 - Linha")
+        print("5 - Todos os sólidos")
+        print("0 - Sair")
+
+        choice = input("Opção: ")
+
+        if choice == "1":
+            vertices, faces = create_open_box(side=9, height=10, wall_thickness=0.9)
+            plot_mesh(vertices, faces, 'Caixa Aberta', facecolor='blue')
+        elif choice == "2":
+            vertices, faces = create_cone(radius=1, height=3, resolution=70, pad=0.1)
+            plot_mesh(vertices, faces, 'Cone', facecolor='green')
+        elif choice == "3":
+            vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=3, resolution=70, pad=0.1)
+            plot_mesh(vertices, faces, 'Tronco de Cone', facecolor='red')
+        elif choice == "4":
+            vertices, faces = create_line(length=3)
+            plot_mesh(vertices, faces, 'Linha Reta', facecolor='purple')
+        elif choice == "5":
+            vertices, faces = create_open_box(side=9, height=10, wall_thickness=0.9)
+            plot_mesh(vertices, faces, 'Caixa Aberta', facecolor='blue')
+
+            vertices, faces = create_cone(radius=1, height=3, resolution=70, pad=0.1)
+            plot_mesh(vertices, faces, 'Cone', facecolor='green')
+
+            vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=3, resolution=70, pad=0.1)
+            plot_mesh(vertices, faces, 'Tronco de Cone', facecolor='red')
+
+            vertices, faces = create_line(length=3)
+            plot_mesh(vertices, faces, 'Linha Reta', facecolor='purple')
+        elif choice == "0":
+            print("Saindo...")
+            break
+        else:
+            print("Opção inválida. Tente novamente.")
+
 if __name__ == "__main__":
-    # Caixa aberta
-    vertices, faces = create_open_box(side=2, height=1.5, wall_thickness=0.15)
-    plot_mesh(vertices, faces, 'Caixa Aberta', facecolor='blue')
-
-    # Cone
-    # vertices, faces = create_cone(radius=1, height=3)
-    vertices, faces = create_cone(radius=1, height=3, resolution=70, pad=0.1)
-    plot_mesh(vertices, faces, 'Cone', facecolor='green')
-
-    # Tronco de cone
-    # vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=2)
-    vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=3,
-                                            resolution=70, pad=0.1)
-    plot_mesh(vertices, faces, 'Tronco de Cone', facecolor='red')
-
-    # Linha
-    vertices, faces = create_line(length=3)
-    plot_mesh(vertices, faces, 'Linha Reta',facecolor='purple')
+    menu()
 
 
+#Linha feita como um cilindro
+# def create_line(length=3, radius=0.05, resolution=50):
+#     """
+#     Linha reta representada como cilindro fino
+#     """
+#     x = np.linspace(-radius, radius, resolution)
+#     y = np.linspace(-radius, radius, resolution)
+#     z = np.linspace(0, length, resolution)
+#
+#     X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
+#
+#     volume = (np.sqrt(X**2 + Y**2) <= radius) & (Z >= 0)
+#
+#     vertices, faces, _, _ = marching_cubes(
+#         volume,
+#         level=0.5,
+#         spacing=(x[1]-x[0], y[1]-y[0], z[1]-z[0])
+#     )
+#
+#     return vertices, faces
 
+#Codigo com arestas
 # import numpy as np
 # from skimage.measure import marching_cubes
 # import matplotlib.pyplot as plt

@@ -1,55 +1,77 @@
 import numpy as np
-from skimage.measure import marching_cubes
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
 from test import create_open_box, create_cone, create_frustum, create_line
 
+def get_scale_matrix(scale):
 
-# Funções de transformação geométrica
-def rotate_x(vertices, degrees):
-    theta = np.radians(degrees)
-    rot = np.array([
-        [1, 0, 0],
-        [0, np.cos(theta), -np.sin(theta)],
-        [0, np.sin(theta), np.cos(theta)]
+    return np.array([
+        [scale, 0, 0, 0],
+        [0, scale, 0, 0],
+        [0, 0, scale, 0],
+        [0, 0, 0, 1]
     ])
-    return np.dot(vertices, rot.T)
 
-def rotate_y(vertices, degrees):
-    theta = np.radians(degrees)
-    rot = np.array([
-        [np.cos(theta), 0, np.sin(theta)],
-        [0, 1, 0],
-        [-np.sin(theta), 0, np.cos(theta)]
-    ])
-    return np.dot(vertices, rot.T)
+def get_translation_matrix(translation):
 
-def rotate_z(vertices, degrees):
-    theta = np.radians(degrees)
-    rot = np.array([
-        [np.cos(theta), -np.sin(theta), 0],
-        [np.sin(theta), np.cos(theta), 0],
-        [0, 0, 1]
+    tx, ty, tz = translation
+    return np.array([
+        [1, 0, 0, tx],
+        [0, 1, 0, ty],
+        [0, 0, 1, tz],
+        [0, 0, 0, 1]
     ])
-    return np.dot(vertices, rot.T)
+
+def get_rotation_matrix_x(degrees):
+
+    theta = np.radians(degrees)
+    return np.array([
+        [1, 0, 0, 0],
+        [0, np.cos(theta), -np.sin(theta), 0],
+        [0, np.sin(theta), np.cos(theta), 0],
+        [0, 0, 0, 1]
+    ])
+
+def get_rotation_matrix_y(degrees):
+
+    theta = np.radians(degrees)
+    return np.array([
+        [np.cos(theta), 0, np.sin(theta), 0],
+        [0, 1, 0, 0],
+        [-np.sin(theta), 0, np.cos(theta), 0],
+        [0, 0, 0, 1]
+    ])
+
+def get_rotation_matrix_z(degrees):
+
+    theta = np.radians(degrees)
+    return np.array([
+        [np.cos(theta), -np.sin(theta), 0, 0],
+        [np.sin(theta), np.cos(theta), 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ])
 
 def apply_transformations(vertices, scale=1, rotation=(0,0,0), translation=(0,0,0)):
-    """Aplica escala, rotação e translação aos vértices"""
-    # Escala
-    vert = vertices * scale
 
-    # Rotação (ordem XYZ)
-    vert = rotate_x(vert, rotation[0])
-    vert = rotate_y(vert, rotation[1])
-    vert = rotate_z(vert, rotation[2])
+    # Criar matriz de transformação combinada
+    transformation_matrix = (
+        get_translation_matrix(translation) @
+        get_rotation_matrix_z(rotation[2]) @
+        get_rotation_matrix_y(rotation[1]) @
+        get_rotation_matrix_x(rotation[0]) @
+        get_scale_matrix(scale)
+    )
 
-    # Translação
-    vert += np.array(translation)
+    # Converter vértices para coordenadas homogêneas (adicionar uma dimensão extra de 1)
+    homogeneous_vertices = np.hstack([vertices, np.ones((vertices.shape[0], 1))])
 
-    return vert
+    # Aplicar a transformação usando multiplicação de matrizes
+    transformed_vertices = homogeneous_vertices @ transformation_matrix.T
 
-# Função para criar e transformar todos os objetos
+    # Remover a dimensão homogênea e retornar os vértices transformados
+    return transformed_vertices[:, :3]
+
 def create_scene():
     # Gerar objetos base
     box_verts, box_faces = create_open_box(side=4, height=3, wall_thickness=0.15, resolution=20)
@@ -102,8 +124,8 @@ def create_scene():
 
     return scene
 
-# Função de visualização da cena completa
 def plot_scene(scene):
+
     fig = plt.figure(figsize=(12, 10))
     ax = fig.add_subplot(111, projection='3d')
 
@@ -137,7 +159,6 @@ def plot_scene(scene):
     plt.tight_layout()
     plt.show()
 
-# Execução principal
 if __name__ == "__main__":
     scene = create_scene()
 
@@ -146,7 +167,6 @@ if __name__ == "__main__":
     print(f"Valor máximo em qualquer eixo: {np.max(np.abs(all_verts)):.2f}")
 
     plot_scene(scene)
-
 
 
 # import numpy as np
