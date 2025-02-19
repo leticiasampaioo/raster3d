@@ -4,13 +4,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 def create_open_box(side=2, height=1, wall_thickness=0.1, resolution=50):
-    """
-    Caixa aberta sem tampa com base quadrada
-    :param side: Lado da base quadrada
-    :param height: Altura da caixa
-    :param wall_thickness: Espessura das paredes
-    :param resolution: Resolução da grade 3D
-    """
+
     # Cria grade 3D centralizada na base
     x = np.linspace(-side/2, side/2, resolution)
     y = np.linspace(-side/2, side/2, resolution)
@@ -35,21 +29,7 @@ def create_open_box(side=2, height=1, wall_thickness=0.1, resolution=50):
     return vertices, faces
 
 def create_cone(radius=1, height=2, resolution=50, pad=0.1):
-    """
-    Cria um cone sólido fechado (com base e lateral) utilizando o marching cubes.
-    É adicionado um padding no eixo Z para que as transições (de False para True)
-    ocorram internamente ao grid, permitindo que o algoritmo gere as faces (base e ápice)
-    com a triangulação padrão.
 
-    Parâmetros:
-      - radius: raio da base do cone.
-      - height: altura do cone.
-      - resolution: resolução da grade 3D.
-      - pad: valor de padding no eixo Z.
-
-    Retorna:
-      - vertices, faces: malha triangular do cone fechado.
-    """
     # Define os intervalos de x, y e z
     x = np.linspace(-radius, radius, resolution)
     y = np.linspace(-radius, radius, resolution)
@@ -73,22 +53,7 @@ def create_cone(radius=1, height=2, resolution=50, pad=0.1):
     return vertices, faces
 
 def create_frustum(r_lower=1, r_upper=0.5, height=2, resolution=50, pad=0.1):
-    """
-    Cria o tronco de cone como sólido fechado (com bases e topo) usando o padrão do marching cubes.
 
-    Para que o marching cubes gere todas as faces (inclusive base e topo) de forma padrão,
-    o volume é definido com um pequeno padding no eixo z.
-
-    Parâmetros:
-      - r_lower: raio da base inferior.
-      - r_upper: raio da base superior.
-      - height: altura do tronco.
-      - resolution: resolução da grade.
-      - pad: valor de padding no eixo z.
-
-    Retorna:
-      - vertices, faces: malha triangular gerada.
-    """
     # Para x e y usamos o máximo dos raios
     max_radius = max(r_lower, r_upper)
     x = np.linspace(-max_radius, max_radius, resolution)
@@ -110,16 +75,14 @@ def create_frustum(r_lower=1, r_upper=0.5, height=2, resolution=50, pad=0.1):
     return vertices, faces
 
 def create_line(length=3):
-    """
-    Linha reta de tamanho 3
-    """
+
     # Define os pontos inicial e final da linha
     vertices = np.array([[0, 0, 0], [0, 0, length]])  # Linha ao longo do eixo Z
     faces = np.array([[0, 1]])  # Apenas uma aresta conectando os dois pontos
     return vertices, faces
 
 def plot_mesh(vertices, faces, title='Malha 3D', facecolor='skyblue', linewidth=2):
-    """Função de visualização genérica"""
+
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
 
@@ -153,16 +116,16 @@ def menu():
         print("5 - Todos os sólidos")
         print("0 - Sair")
 
-        choice = input("Opção: ")
+        choice = input("Digite o número da opção desejada:")
 
         if choice == "1":
-            vertices, faces = create_open_box(side=9, height=10, wall_thickness=0.9)
+            vertices, faces = create_open_box(side=9, height=10, wall_thickness=0.9, resolution=20)
             plot_mesh(vertices, faces, 'Caixa Aberta', facecolor='blue')
         elif choice == "2":
-            vertices, faces = create_cone(radius=1, height=3, resolution=70, pad=0.1)
+            vertices, faces = create_cone(radius=1, height=3, resolution=20, pad=0.1)
             plot_mesh(vertices, faces, 'Cone', facecolor='green')
         elif choice == "3":
-            vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=3, resolution=70, pad=0.1)
+            vertices, faces = create_frustum(r_lower=1.5, r_upper=0.5, height=3, resolution=20, pad=0.1)
             plot_mesh(vertices, faces, 'Tronco de Cone', facecolor='red')
         elif choice == "4":
             vertices, faces = create_line(length=3)

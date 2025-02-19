@@ -12,6 +12,12 @@ def projetar_yz(vertices):
 def projetar_zx(vertices):
     return vertices[:, [2, 0]]  # Seleciona apenas as coordenadas Z e X
 
+def perspective_projection(vertices, d=4):
+
+    x = vertices[:, 0] / (vertices[:, 2] + d)  # Divide X por (Z + d)
+    y = vertices[:, 1] / (vertices[:, 2] + d)  # Divide Y por (Z + d)
+    return np.column_stack((x, y))
+
 def plot_2d_edges(vertices_2d, faces, color='b'):
 
     for face in faces:
@@ -35,6 +41,32 @@ def plot_projection(scene, transformation_matrix, projection_func, title, xlabel
 
     plt.show()
 
+def menu():
+    print("Escolha o tipo de projeção:")
+    print("1 - Projeção Ortogonal")
+    print("2 - Projeção em Perspectiva")
+    print("3 - Ambos")
+    choice = input("Digite o número da opção desejada: ")
+
+    if choice == "1":
+        # Projeção Ortogonal
+        plot_projection(scene, transformation_matrix, projetar_xy, "Projeção Ortogonal XY", "X", "Y")
+        plot_projection(scene, transformation_matrix, projetar_yz, "Projeção Ortogonal YZ", "Y", "Z")
+        plot_projection(scene, transformation_matrix, projetar_zx, "Projeção Ortogonal ZX", "Z", "X")
+    elif choice == "2":
+        # Projeção em Perspectiva
+        plot_projection(scene, transformation_matrix, perspective_projection, "Projeção em Perspectiva", "X", "Y")
+    elif choice == "3":
+        # Ambos
+        plot_projection(scene, transformation_matrix, projetar_xy, "Projeção Ortogonal XY", "X", "Y")
+        plot_projection(scene, transformation_matrix, projetar_yz, "Projeção Ortogonal YZ", "Y", "Z")
+        plot_projection(scene, transformation_matrix, projetar_zx, "Projeção Ortogonal ZX", "Z", "X")
+        plot_projection(scene, transformation_matrix, perspective_projection, "Projeção em Perspectiva", "X", "Y")
+    else:
+        print("Opção inválida. Por favor, execute o programa novamente e escolha uma opção válida.")
+
+    return choice
+
 if __name__ == "__main__":
 
     scene = create_scene()
@@ -47,10 +79,8 @@ if __name__ == "__main__":
     # Calcula a matriz de transformação homogênea (rotação + translação)
     transformation_matrix = look_at(camera_eye, camera_target, camera_up)
 
-    # Plotar as projeções 2D da cena nos diferentes planos ortogonais
-    plot_projection(scene, transformation_matrix, projetar_xy, "Projeção Ortogonal XY", "X", "Y")
-    plot_projection(scene, transformation_matrix, projetar_yz, "Projeção Ortogonal YZ", "Y", "Z")
-    plot_projection(scene, transformation_matrix, projetar_zx, "Projeção Ortogonal ZX", "Z", "X")
+    choice = menu()
+
 
 # import numpy as np
 # import matplotlib.pyplot as plt

@@ -1,9 +1,9 @@
 from PIL import Image, ImageDraw
+import numpy as np
 import matplotlib.pyplot as plt
 from test import create_line, create_open_box, create_cone, create_frustum
 
 def rasterize_objects(vertices_2d, faces, resolution):
-
     # Cria uma imagem em branco
     img = Image.new("RGB", resolution, "white")
     draw = ImageDraw.Draw(img)
@@ -17,17 +17,19 @@ def rasterize_objects(vertices_2d, faces, resolution):
     vertices_scaled = (vertices_2d - vertices_2d.min(axis=0)) * scale
     vertices_scaled[:, 1] = resolution[1] - vertices_scaled[:, 1]  # Inverte Y para coordenadas de imagem
 
-    # Desenha as faces
+    # Desenha as faces ou arestas
     for face in faces:
-        # Obtém os vértices da face
-        points = [tuple(vertices_scaled[v]) for v in face]
-        # Desenha o polígono (face)
-        draw.polygon(points, outline="black", fill=None)
+        if len(face) == 2:  # Se for uma linha (dois vértices)
+            start = tuple(vertices_scaled[face[0]])
+            end = tuple(vertices_scaled[face[1]])
+            draw.line([start, end], fill="black", width=1)
+        else:  # Se for um polígono (mais de dois vértices)
+            points = [tuple(vertices_scaled[v]) for v in face]
+            draw.polygon(points, outline="black", fill=None)
 
     return img
 
 def perspective_projection(vertices, focal_length=5, plane="xy"):
-
     if plane == "xy":
         vertices_2d = vertices[:, :2] / (vertices[:, 2:3] + focal_length)
     elif plane == "yz":
@@ -37,10 +39,10 @@ def perspective_projection(vertices, focal_length=5, plane="xy"):
     else:
         raise ValueError("Plano de projeção inválido! Escolha entre 'xy', 'yz' ou 'zx'.")
 
+    print("Vértices 2D projetados:", vertices_2d)  # Depuração
     return vertices_2d
 
 def rasterize_scene(object_index, resolutions):
-
     object_names = ["Caixa Aberta", "Cone", "Tronco de Cone", "Linha"]
 
     # Verifica se o índice do objeto é válido
@@ -61,8 +63,13 @@ def rasterize_scene(object_index, resolutions):
         print("Índice de objeto inválido!")
         return
 
+    # Define os planos de projeção
+    if object_index == 3:  # Se for a linha, projeta apenas no plano YZ
+        planes = ["yz"]
+    else:  # Para outros objetos, projeta apenas nos planos XY e YZ
+        planes = ["xy", "yz"]
+
     # Rasteriza o objeto em cada resolução e plano
-    planes = ["xy", "yz", "zx"]
     for plane in planes:
         for idx, resolution in enumerate(resolutions):
             print(f"Rasterizando {object_names[object_index]} no plano {plane.upper()} em resolução {resolution}...")
@@ -91,27 +98,44 @@ if __name__ == "__main__":
         (1280, 720)  # Resolução alta
     ]
 
-    # Menu
-    print("Escolha o objeto para rasterizar:")
-    print("0 - Caixa Aberta")
-    print("1 - Cone")
-    print("2 - Tronco de Cone")
-    print("3 - Linha")
-    object_index = int(input("Digite o número do objeto: "))
+    while True:
+        print("\nEscolha o objeto para rasterizar:")
+        print("1 - Caixa Aberta")
+        print("2 - Cone")
+        print("3 - Tronco de Cone")
+        print("4 - Linha")
+        print("0 - Sair")
+        escolha = input("Digite o número da opção desejada: ")
 
-    # Rasteriza o objeto escolhido nas três resoluções
-    rasterize_scene(object_index, resolutions)
+        # Verifica se o usuário quer sair
+        if escolha == "0":
+            print("Saindo...")
+            break
+
+        # Converte a escolha para inteiro e ajusta o índice
+        try:
+            object_index = int(escolha) - 1  # Subtrai 1 para corresponder aos índices dos objetos
+        except ValueError:
+            print("Entrada inválida! Digite um número válido.")
+            continue
+
+        # Verifica se o índice do objeto é válido
+        if object_index < 0 or object_index >= 4:
+            print("Índice de objeto inválido! Escolha um número entre 1 e 4.")
+            continue
+
+        # Rasteriza o objeto escolhido nas três resoluções
+        rasterize_scene(object_index, resolutions)
 
 
-# Só da linha
-#import numpy as np
+# #Só da linha
+# import numpy as np
 # from PIL import Image, ImageDraw
 # import matplotlib.pyplot as plt  # Adicionado para exibir as imagens
 #
 # from test_2 import create_scene
 #
 # from test_4 import perspective_projection
-#
 #
 # # Função para rasterizar os objetos em uma imagem
 # def rasterize_objects(vertices_2d, faces, resolution):
@@ -194,5 +218,5 @@ if __name__ == "__main__":
 #
 #     # Rasterizar a cena em diferentes resoluções
 #     rasterize_scene(scene, resolutions)
-
+#
 

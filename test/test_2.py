@@ -126,7 +126,7 @@ def create_scene():
 
 def plot_scene(scene):
 
-    fig = plt.figure(figsize=(12, 10))
+    fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(111, projection='3d')
 
     colors = ['blue', 'green', 'red', 'purple']
