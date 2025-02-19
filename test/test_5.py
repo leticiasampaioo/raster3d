@@ -1,12 +1,34 @@
-from PIL import Image, ImageDraw
 import numpy as np
 import matplotlib.pyplot as plt
 from test import create_line, create_open_box, create_cone, create_frustum
 
+def bresenham_line(x0, y0, x1, y1, image):
+
+    dx = abs(x1 - x0)
+    dy = abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx - dy
+
+    while True:
+        if 0 <= x0 < image.shape[1] and 0 <= y0 < image.shape[0]:
+            image[y0, x0] = 0  # Desenha o pixel (0 para cor preta em imagem binária)
+
+        if x0 == x1 and y0 == y1:
+            break
+
+        e2 = 2 * err
+        if e2 > -dy:
+            err -= dy
+            x0 += sx
+        if e2 < dx:
+            err += dx
+            y0 += sy
+
 def rasterize_objects(vertices_2d, faces, resolution):
-    # Cria uma imagem em branco
-    img = Image.new("RGB", resolution, "white")
-    draw = ImageDraw.Draw(img)
+    """ Rasteriza os objetos desenhando linhas entre os vértices manualmente. """
+    # Cria uma imagem em branco (branco representado por 255)
+    image = np.ones((resolution[1], resolution[0])) * 255
 
     # Escala os vértices para o tamanho da imagem
     scale_x = resolution[0] / (vertices_2d[:, 0].max() - vertices_2d[:, 0].min())
@@ -19,15 +41,12 @@ def rasterize_objects(vertices_2d, faces, resolution):
 
     # Desenha as faces ou arestas
     for face in faces:
-        if len(face) == 2:  # Se for uma linha (dois vértices)
-            start = tuple(vertices_scaled[face[0]])
-            end = tuple(vertices_scaled[face[1]])
-            draw.line([start, end], fill="black", width=1)
-        else:  # Se for um polígono (mais de dois vértices)
-            points = [tuple(vertices_scaled[v]) for v in face]
-            draw.polygon(points, outline="black", fill=None)
+        for i in range(len(face)):
+            start = vertices_scaled[face[i]].astype(int)
+            end = vertices_scaled[face[(i + 1) % len(face)]].astype(int)
+            bresenham_line(start[0], start[1], end[0], end[1], image)
 
-    return img
+    return image
 
 def perspective_projection(vertices, focal_length=5, plane="xy"):
     if plane == "xy":
@@ -39,7 +58,6 @@ def perspective_projection(vertices, focal_length=5, plane="xy"):
     else:
         raise ValueError("Plano de projeção inválido! Escolha entre 'xy', 'yz' ou 'zx'.")
 
-    print("Vértices 2D projetados:", vertices_2d)  # Depuração
     return vertices_2d
 
 def rasterize_scene(object_index, resolutions):
@@ -80,13 +98,10 @@ def rasterize_scene(object_index, resolutions):
             # Rasteriza o objeto na imagem
             img = rasterize_objects(verts_2d, faces, resolution)
 
-            # Salva a imagem
-            img.save(f"rasterized_{object_names[object_index].replace(' ', '_')}_{plane}_{resolution[0]}x{resolution[1]}.png")
-
             # Exibe a imagem usando matplotlib
             plt.figure(figsize=(8, 6))
             plt.title(f"{object_names[object_index]} ({plane.upper()} - {resolution[0]}x{resolution[1]})")
-            plt.imshow(img)
+            plt.imshow(img, cmap="gray")
             plt.axis("off")  # Desativa os eixos
             plt.show()
 
@@ -126,97 +141,3 @@ if __name__ == "__main__":
 
         # Rasteriza o objeto escolhido nas três resoluções
         rasterize_scene(object_index, resolutions)
-
-
-# #Só da linha
-# import numpy as np
-# from PIL import Image, ImageDraw
-# import matplotlib.pyplot as plt  # Adicionado para exibir as imagens
-#
-# from test_2 import create_scene
-#
-# from test_4 import perspective_projection
-#
-# # Função para rasterizar os objetos em uma imagem
-# def rasterize_objects(vertices_2d, faces, resolution):
-#     """
-#     Rasteriza os objetos em uma imagem com a resolução especificada.
-#     :param vertices_2d: Vértices projetados em 2D (shape: Nx2)
-#     :param faces: Faces do objeto (shape: Mx3)
-#     :param resolution: Resolução da imagem (largura, altura)
-#     :return: Imagem rasterizada
-#     """
-#     # Cria uma imagem em branco
-#     img = Image.new("RGB", resolution, "white")
-#     draw = ImageDraw.Draw(img)
-#
-#     # Escala os vértices para o tamanho da imagem
-#     scale_x = resolution[0] / (vertices_2d[:, 0].max() - vertices_2d[:, 0].min())
-#     scale_y = resolution[1] / (vertices_2d[:, 1].max() - vertices_2d[:, 1].min())
-#     scale = min(scale_x, scale_y)
-#
-#     # Centraliza os vértices na imagem
-#     vertices_scaled = (vertices_2d - vertices_2d.min(axis=0)) * scale
-#     vertices_scaled[:, 1] = resolution[1] - vertices_scaled[:, 1]  # Inverte Y para coordenadas de imagem
-#
-#     # Desenha as arestas
-#     for face in faces:
-#         face_cycle = np.append(face, face[0])  # Fecha o ciclo da face
-#         points = vertices_scaled[face_cycle].tolist()
-#         # Converte os pontos para uma lista de tuplas (x, y)
-#         points = [(int(p[0]), int(p[1])) for p in points]
-#         draw.line(points, fill="black", width=1)  # Desenha as arestas
-#
-#     return img
-#
-# # Função principal para rasterizar a cena em diferentes resoluções
-# def rasterize_scene(scene, resolutions):
-#     """
-#     Rasteriza a cena em diferentes resoluções.
-#     :param scene: Lista de objetos (vértices e faces) no sistema do mundo
-#     :param resolutions: Lista de resoluções (largura, altura)
-#     """
-#     for idx, resolution in enumerate(resolutions):
-#         print(f"Rasterizando em resolução {resolution}...")
-#
-#         # Cria uma imagem para cada resolução
-#         img = Image.new("RGB", resolution, "white")
-#         draw = ImageDraw.Draw(img)
-#
-#         # Rasteriza cada objeto na cena
-#         for verts, faces in scene:
-#             # Projeta os vértices em 2D (usando a função perspective_projection do código anterior)
-#             verts_2d = perspective_projection(verts, focal_length=5)
-#
-#             # Rasteriza o objeto na imagem
-#             obj_img = rasterize_objects(verts_2d, faces, resolution)
-#
-#             # Cola o objeto na imagem principal
-#             img.paste(obj_img, (0, 0))  # Removido o parâmetro mask
-#
-#         # Salva a imagem
-#         img.save(f"rasterized_scene_{idx + 1}.png")
-#
-#         # Exibe a imagem usando matplotlib
-#         plt.figure(figsize=(8, 6))
-#         plt.title(f"Linha ({resolution[0]}x{resolution[1]})")
-#         plt.imshow(img)
-#         plt.axis("off")  # Desativa os eixos
-#         plt.show()
-#
-# # Execução principal
-# if __name__ == "__main__":
-#     # Criar cena no sistema do mundo
-#     scene = create_scene()
-#
-#     # Definir resoluções
-#     resolutions = [
-#         (320, 240),  # Resolução baixa
-#         (640, 480),  # Resolução média
-#         (1280, 720)  # Resolução alta
-#     ]
-#
-#     # Rasterizar a cena em diferentes resoluções
-#     rasterize_scene(scene, resolutions)
-#
-
